@@ -8,7 +8,7 @@
         <div class="row">
             <!-- Product Image -->
             <div class="col-md-6">
-                <img src="{{ asset('images/airbod.png') }}" class="img-fluid rounded" alt="Product">
+                <img src="{{ asset('images/' ~ product.image) }}" class="img-fluid rounded" alt="{{ product.name }}">
             </div>
 
             <!-- Product Information -->
@@ -20,21 +20,15 @@
                     </ol>
                 </nav>
 
-                <span class="badge bg-primary mb-3">Electronics</span>
+                <span class="badge bg-{{ product.badge }} mb-3">{{ product.category }}</span>
                 
-                <h1 class="mb-3">Wireless Headphones</h1>
+                <h1 class="mb-3">{{ product.name }}</h1>
                 
-                <h3 class="text-success mb-4">$79.99</h3>
+                <h3 class="text-success mb-4">${{ product.price }}</h3>
 
                 <div class="mb-4">
                     <h5>Description</h5>
-                    <p class="text-muted">
-                        Experience premium sound quality with our wireless headphones. 
-                        Featuring advanced noise cancellation technology, comfortable over-ear design, 
-                        and up to 30 hours of battery life. Perfect for music lovers, travelers, and professionals. 
-                        The foldable design makes them easy to carry, while the premium materials ensure durability 
-                        and long-lasting comfort.
-                    </p>
+                    <p class="text-muted">{{ product.description }}</p>
                 </div>
 
                 <!-- Add to Cart Form -->
@@ -53,9 +47,9 @@
                 <!-- Additional Info -->
                 <div class="mt-4 pt-4 border-top">
                     <ul class="list-unstyled">
-                        <li class="mb-2"><strong>SKU:</strong> WH-2024-001</li>
-                        <li class="mb-2"><strong>Availability:</strong> <span class="text-success">In Stock</span></li>
-                        <li class="mb-2"><strong>Category:</strong> Electronics</li>
+                        <li class="mb-2"><strong>SKU:</strong> {{ product.sku }}</li>
+                        <li class="mb-2"><strong>Availability:</strong> <span class="text-success">{{ product.stock }}</span></li>
+                        <li class="mb-2"><strong>Category:</strong> {{ product.category }}</li>
                     </ul>
                 </div>
             </div>
