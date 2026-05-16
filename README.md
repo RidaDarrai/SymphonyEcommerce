@@ -4,11 +4,7 @@ Step 1 of the Symfony e-commerce exercise series: static HTML template integrati
 ## Description
 A prototype e-commerce site with 7 Bootstrap 5-powered static pages, no database/dynamic code yet (per Step 1 requirements).
 
-Just crushed Step 2, Created Doctrine entities for Category and Product, couldn't get sql-lite to work (rookie mistake) so i fake-it-til-you-make-it-ed controller arrays to simulate dynamic pages. 
-Pages now pull data from Symfony controllers (not hardcoded in Twig templates) :
-BrowseCategoriesController passes a $categories array
-ProductsByCategoryController passes $category/$products arrays
-ProductDetailsController passes a $product array Twig loops through these variables instead of static HTML. We used arrays as a workaround since SQLite driver is missing.
+
 
 ## Features
 - 7 integrated pages: Home, Products, Product Details, Cart, Login, Profile, Browse Categories
@@ -39,4 +35,14 @@ PHP 8.1+, Composer, Git
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/82cee196-be49-4c9a-aa86-d1dc40269231" />
 
 ### 7.Categories:
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/cb1d8312-eac2-4f0e-a4aa-e0c55c6e14e1" 
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/cb1d8312-eac2-4f0e-a4aa-e0c55c6e14e1" />
+
+
+
+#STEP 2
+
+Step 2 : Created Doctrine entities for Category and Product, but couldn't get sql-lite to work due to some driver error (rookie mistake) so i just used controller arrays to simulate dynamic pages. 
+Pages now pull data from Symfony controllers (not hardcoded in Twig templates) :
+BrowseCategoriesController passes a $categories array
+ProductsByCategoryController passes $category/$products arrays
+ProductDetailsController passes a $product array Twig loops through these variables instead of static HTML. We used arrays as a workaround since SQLite driver is missing.
