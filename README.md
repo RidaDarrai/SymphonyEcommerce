@@ -39,10 +39,150 @@ PHP 8.1+, Composer, Git
 
 
 
-#STEP 2
+# STEP 2
 
 Step 2 : Created Doctrine entities for Category and Product, but couldn't get sql-lite to work due to some driver error (rookie mistake) so i just used controller arrays to simulate dynamic pages. 
 Pages now pull data from Symfony controllers (not hardcoded in Twig templates) :
 BrowseCategoriesController passes a $categories array
+
+## Step 3: Shopping Cart with SOLID Principles
+
+Implemented a flexible shopping cart system following SOLID principles and Symfony dependency injection.
+
+### Project Structure Updates
+```
+symfony-project/
+├── src/
+│   ├── Controller/
+│   │   └── CartController.php          # Cart actions (add/remove/view)
+│   ├── Cart/                           # NEW: Cart service layer
+│   │   ├── CartInterface.php           # Contract for cart operations
+│   │   ├── SessionCart.php             # Session-based storage
+│   │   ├── CartHandler.php             # Business logic with DI
+│   │   ├── ApiCart.php                 # Alternative storage strategy
+│   │   └── ProductCatalogInterface.php # Abstraction for product data
+│   ├── Entity/
+│   │   ├── Category.php
+│   │   └── Product.php
+│   └── Repository/
+│       ├── CategoryRepository.php
+│       └── ProductRepository.php
+├── templates/
+│   └── cart/
+│       └── index.html.twig             # Displays cart contents
+└── ...
+```
+
+### Key Components
+
+**CartInterface** (`src/Cart/CartInterface.php`)
+```php
+interface CartInterface
+{
+    public function addItem(int $productId, int $quantity = 1): void;
+    public function removeItem(int $productId): void;
+    public function updateItemQuantity(int $productId, int $quantity): void;
+    public function getItems(): array;
+    public function getTotalItems(): int;
+    public function getTotalPrice(): float;
+    public function clear(): void;
+    public function isEmpty(): bool;
+}
+```
+
+**SessionCart** (`src/Cart/SessionCart.php`)
+```php
+class SessionCart implements CartInterface
+{
+    private SessionInterface $session;
+    private const CART_SESSION_KEY = 'cart';
+
+    public function __construct(SessionInterface $session)
+    {
+        $this->session = $session;
+        if (!$this->session->has(self::CART_SESSION_KEY)) {
+            $this->session->set(self::CART_SESSION_KEY, []);
+        }
+    }
+
+    public function addItem(int $productId, int $quantity = 1): void
+    {
+        $cart = $this->session->get(self::CART_SESSION_KEY, []);
+        $cart[$productId] = ($cart[$productId] ?? 0) + $quantity;
+        $this->session->set(self::CART_SESSION_KEY, $cart);
+    }
+
+    public function getItems(): array
+    {
+        return $this->session->get(self::CART_SESSION_KEY, []);
+    }
+
+    public function getTotalPrice(): float
+    {
+        // Price calculation delegated to CartHandler (depends on ProductRepository)
+        return 0.0;
+    }
+    // ... other methods ...
+}
+```
+
+**CartHandler** (`src/Cart/CartHandler.php`)
+```php
+class CartHandler
+{
+    private CartInterface $cartStorage;
+    private ProductRepository $productRepository;
+
+    public function __construct(CartInterface $cartStorage, ProductRepository $productRepository)
+    {
+        $this->cartStorage = $cartStorage;
+        $this->productRepository = $productRepository;
+    }
+
+    public function getTotalPrice(): float
+    {
+        $total = 0.0;
+        foreach ($this->cartStorage->getItems() as $productId => $quantity) {
+            $product = $this->productRepository->find($productId);
+            if ($product) {
+                $total += $product->getPrice() * $quantity;
+            }
+        }
+        return $total;
+    }
+    // ... other methods delegate to $cartStorage ...
+}
+```
+
+**Usage in Controller** (`src/Controller/CartController.php`)
+```php
+#[Route('/cart', name: 'app_cart')]
+public function index(CartHandler $cartHandler): Response
+{
+    return $this->render('cart/index.html.twig', [
+        'cartItems' => $cartHandler->getItems(),
+        'totalItems' => $cartHandler->getTotalItems(),
+        'totalPrice' => $cartHandler->getTotalPrice(),
+    ]);
+}
+
+#[Route('/cart/add/{id}', name: 'app_cart_add', methods: ['POST'])]
+public function add(Request $request, int $id, CartHandler $cartHandler): Response
+{
+    $quantity = $request->request->get('quantity', 1);
+    $cartHandler->addItem($id, $quantity);
+    return $this->redirectToRoute('app_cart');
+}
+```
+
+### SOLID Principles Applied
+- **Single Responsibility**: Each class has one clear purpose (interface, storage, business logic)
+- **Open/Closed**: New strategies (e.g., `ApiCart`) can be added without modifying existing code
+- **Liskov Substitution**: Any `CartInterface` implementation works with `CartHandler`
+- **Interface Segregation**: Focused interfaces (`CartInterface`, `ProductCatalogInterface`)
+- **Dependency Inversion**: High-level modules depend on abstractions (`CartInterface`, not concrete implementations)
+
+### Usage
+The cart stores data in Symfony session (temporary per user). To change storage mechanism (e.g., to database or API), simply inject a different `CartInterface` implementation—no changes needed to `CartHandler` or controllers.
 ProductsByCategoryController passes $category/$products arrays
 ProductDetailsController passes a $product array Twig loops through these variables instead of static HTML. We used arrays as a workaround since SQLite driver is missing.
