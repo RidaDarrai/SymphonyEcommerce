@@ -1,5 +1,7 @@
 # Symfony E-Commerce Template Integration
-Step 1 of the Symfony e-commerce exercise series: static HTML template integration into Symfony 7.4.
+
+
+# Step 1 of the Symfony e-commerce exercise series: static HTML template integration into Symfony 7.4.
 
 ## Description
 A prototype e-commerce site with 7 Bootstrap 5-powered static pages, no database/dynamic code yet (per Step 1 requirements).
@@ -45,7 +47,7 @@ Step 2 : Created Doctrine entities for Category and Product, but couldn't get sq
 Pages now pull data from Symfony controllers (not hardcoded in Twig templates) :
 BrowseCategoriesController passes a $categories array
 
-## Step 3: Shopping Cart with SOLID Principles
+# Step 3: Shopping Cart with SOLID Principles
 
 Implemented a flexible shopping cart system following SOLID principles and Symfony dependency injection.
 
@@ -186,3 +188,83 @@ public function add(Request $request, int $id, CartHandler $cartHandler): Respon
 The cart stores data in Symfony session (temporary per user). To change storage mechanism (e.g., to database or API), simply inject a different `CartInterface` implementation—no changes needed to `CartHandler` or controllers.
 ProductsByCategoryController passes $category/$products arrays
 ProductDetailsController passes a $product array Twig loops through these variables instead of static HTML. We used arrays as a workaround since SQLite driver is missing.
+
+## Step 4: Security & Authentication
+
+Added a secure login/logout system using Symfony’s Security component.
+
+### What was added
+- **User entity** (`src/Entity\User.php`) implementing `UserInterface` and `PasswordAuthenticatedUserInterface`.
+- **Security configuration** (`config/packages/security.yaml`) with:
+  - `bcrypt` (auto) password hashing.
+  - Form login (`/login`) and logout (`/logout`) routes.
+  - Access control: `/profile` requires `ROLE_USER`; `/login` and `/register` are public.
+- **Login template** (`templates/security/login.html.twig`) – a simple Bootstrap form.
+- **Base template** updated to show login/logout links based on `is_granted('IS_AUTHENTICATED_FULLY')`.
+- **ProfileController** now requires authentication (via `access_control`; alternatively could add `@IsGranted("ROLE_USER")`).
+
+### Key code snippets
+
+**User entity (excerpt)**
+```php
+// src/Entity/User.php
+class User implements UserInterface, PasswordAuthenticatedUserInterface
+{
+    private ?int $id = null;
+    private ?string $email = null;
+    private ?string $password = null;
+    private array $roles = [];
+
+    public function getUserIdentifier(): string { return (string) $this->email; }
+    public function getRoles(): array { $roles = $this->roles; $roles[] = 'ROLE_USER'; return array_unique($roles); }
+    public function getPassword(): string { return $this->password; }
+    public function setPassword(string $password): self { $this->password = $password; return $this; }
+    public function eraseCredentials(): void { /* clear plain password if used */ }
+}
+```
+
+**Security config (excerpt)**
+```yaml
+# config/packages/security.yaml
+security:
+    password_hashers:
+        App\Entity\User:
+            algorithm: auto
+    providers:
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
+    firewalls:
+        main:
+            lazy: true
+            provider: app_user_provider
+            form_login:
+                login_path: app_login
+                check_path: app_login
+            logout:
+                path: app_logout
+                target: app_home
+    access_control:
+        - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/register, roles: PUBLIC_ACCESS }
+        - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+```
+
+**Login route (auto‑generated)**
+- `/login` – shows the login form.
+- `/logout` – logs the user out and redirects to homepage.
+
+**Base template snippet (show auth status)**
+```twig
+{# templates/base.html.twig #}
+{% if is_granted('IS_AUTHENTICATED_FULLY') %}
+    <a href="{{ path('app_logout') }}">Logout</a>
+    <span>Welcome, {{ app.user.email }}</span>
+{% else %}
+    <a href="{{ path('app_login') }}">Login</a>
+    <a href="{{ path('app_register') }}">Register</a>
+{% endif %}
+```
+
