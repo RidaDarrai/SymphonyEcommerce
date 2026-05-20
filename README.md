@@ -268,3 +268,11 @@ security:
 {% endif %}
 ```
 
+## Formulaire d'inscription:
+
+<img width="1902" height="935" alt="image" src="https://github.com/user-attachments/assets/817c8f37-01f4-476d-bf92-d8a0f501a955" />
+
+## Register :
+
+<img width="1359" height="798" alt="image" src="https://github.com/user-attachments/assets/cae94747-0258-412c-af58-b6acc16d5c90" />
+
